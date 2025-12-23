@@ -29,7 +29,7 @@ StoryGraph Lab takes a structured **story JSON** (characters, relationships, the
 - [Dashboard](#dashboard)
 - [Outputs](#outputs)
 - [Samples](#sample)
-- [Fingerprint Vector (ML)](#fingerprint-vecto)
+- [Fingerprint Vector (ML)](#fingerprint)
 - [D3.js Integration](#d3js-integration)
 - [SQL Schema](#sql-schema)
 - [Development](#development)
@@ -333,7 +333,7 @@ One row per story, many columns of features.
 
 ---
 
-## Fingerprint Vector
+## Fingerprint
 
 The fingerprint is a **fixed-length numeric vector** designed for:
 
