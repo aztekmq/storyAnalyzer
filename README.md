@@ -150,31 +150,39 @@ story-graph-lab/
 
 StoryGraph Lab consumes a **single JSON file per story**, validated against:
 
+```json
+{
+  "story_id": "unique_id",
+  "title": "Human readable title",
+  "author": "Optional author",
+  "characters": [
+    {"id": "neo", "name": "Neo", "role": "Hero"}
+  ],
+  "scenes": [
+    {
+      "label": "Scene name",
+      "emotion": 0.5,
+      "pace": 0.6,
+      "tension": 0.55,
+      "interactions": [
+        {"source": "neo", "target": "trinity", "strength": 0.7}
+      ]
+    }
+  ]
+}
 ```
-src/storygraph/schema/story.schema.json
-```
 
-### Required Top-Level Fields
+### Field Notes
 
-* `story_id`
-* `meta`
-* `structure`
-* `characters`
-* `relationships`
-* `timeseries`
-* `themes`
-* `global_scores`
+* ``story_id`` and ``title`` must be non-empty strings.
+* ``characters`` contains objects with ``id``, ``name``, and optional ``role`` values.
+* Each scene lists ``emotion``, ``pace``, and ``tension`` scores alongside character ``interactions``.
+* Interaction ``strength`` values aggregate across scenes to build the character network and D3 graph.
 
-### Key Constraints
+The repository ships with a complete example you can run immediately:
 
-* Character IDs referenced in `relationships` **must exist**
-* All emotion and pacing arrays must be the **same length**
-* Numeric values must be numbers (not strings)
-
-A complete, working example is included:
-
-```
-data/samples/matrix_story.json
+```bash
+python -m storygraph.pipeline.run_pipeline data/samples/matrix_story.json matrix_demo
 ```
 
 ---
