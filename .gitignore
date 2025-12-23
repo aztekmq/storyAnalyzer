@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+.venv/
+exports/html/*.html
+exports/d3/*.json
+exports/fingerprints/*.csv

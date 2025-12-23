@@ -1,0 +1,63 @@
+{
+  "story_id": "matrix_demo",
+  "title": "The Matrix",
+  "author": "Wachowski Sisters",
+  "characters": [
+    {"id": "neo", "name": "Neo", "role": "Hero"},
+    {"id": "morpheus", "name": "Morpheus", "role": "Mentor"},
+    {"id": "trinity", "name": "Trinity", "role": "Ally"},
+    {"id": "agent_smith", "name": "Agent Smith", "role": "Antagonist"}
+  ],
+  "scenes": [
+    {
+      "label": "Awakening",
+      "emotion": 0.4,
+      "pace": 0.3,
+      "tension": 0.35,
+      "interactions": [
+        {"source": "neo", "target": "trinity", "strength": 0.6},
+        {"source": "neo", "target": "morpheus", "strength": 0.4}
+      ]
+    },
+    {
+      "label": "Training",
+      "emotion": 0.55,
+      "pace": 0.65,
+      "tension": 0.5,
+      "interactions": [
+        {"source": "neo", "target": "morpheus", "strength": 0.9},
+        {"source": "neo", "target": "trinity", "strength": 0.6}
+      ]
+    },
+    {
+      "label": "Oracle",
+      "emotion": 0.6,
+      "pace": 0.55,
+      "tension": 0.65,
+      "interactions": [
+        {"source": "neo", "target": "trinity", "strength": 0.7},
+        {"source": "neo", "target": "morpheus", "strength": 0.6}
+      ]
+    },
+    {
+      "label": "Subway Duel",
+      "emotion": 0.8,
+      "pace": 0.85,
+      "tension": 0.9,
+      "interactions": [
+        {"source": "neo", "target": "agent_smith", "strength": 1.0},
+        {"source": "trinity", "target": "agent_smith", "strength": 0.5}
+      ]
+    },
+    {
+      "label": "Resurrection",
+      "emotion": 0.95,
+      "pace": 0.8,
+      "tension": 0.85,
+      "interactions": [
+        {"source": "neo", "target": "trinity", "strength": 0.9},
+        {"source": "neo", "target": "agent_smith", "strength": 0.7}
+      ]
+    }
+  ]
+}
