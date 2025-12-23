@@ -276,7 +276,7 @@ Format:
   "links": [{ "source": "neo", "target": "smith", "intensity": 9, ... }]
 }
 ```
-## Sample Output Artifacts (What You’ll See)
+## Sample
 
 Below are example outputs produced by running the pipeline on `data/samples/matrix_story.json`. These artifacts help you quickly understand what the system generates.
 
