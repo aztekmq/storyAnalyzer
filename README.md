@@ -1,38 +1,36 @@
-# StoryAnalyzer Lab
+# StoryGraph Lab
 
-Algorithm-ready **story analysis → graphs → exports → ML fingerprints** for movies, books, episodes, and short stories.
+**Algorithmic story analysis → graphs → exports → ML fingerprints**
 
-StoryGraph Lab takes a structured **story JSON** (characters, relationships, themes, time-series emotions/pacing, and global scores), then:
+StoryGraph Lab is a professional-grade framework for analyzing **movies, books, TV episodes, and short stories** as structured data.  
+It converts a single **story JSON** into:
 
-- Builds a **character interaction network** (NetworkX)
-- Generates interactive **Plotly** visualizations:
-  - Character network graph
-  - Emotion arcs (time series)
-  - Tension vs pace
-- Exports:
-  - Plotly HTML files (shareable dashboards)
-  - D3-ready graph JSON (nodes + links)
-  - A **fixed-length numeric fingerprint vector** (CSV) for clustering & similarity
-- Provides a **Plotly Dash** web app where you can **upload JSON** and auto-generate everything.
+- Interactive **character networks**
+- **Emotional and pacing time-series graphs**
+- **D3-ready graph data**
+- A fixed-length **story fingerprint vector** for clustering, similarity, and ML
+
+It supports both:
+- a **CLI pipeline** for batch processing
+- a **Plotly Dash dashboard** for interactive uploads and visualization
 
 ---
 
 ## Table of Contents
 
+- [Why StoryGraph Lab](#why-storygraph-lab)
 - [What You Get](#what-you-get)
 - [Quick Start](#quick-start)
 - [Directory Structure](#directory-structure)
 - [Input Format](#input-format)
-  - [Required Fields](#required-fields)
-  - [Example JSON](#example-json)
+- [Sample Output Artifacts](#sample-output-artifacts)
 - [CLI Pipeline](#cli-pipeline)
 - [Dashboard](#dashboard)
 - [Outputs](#outputs)
-- [Samples](#sample)
-- [Fingerprint Vector (ML)](#fingerprint)
+- [Story Fingerprint (ML Features)](#story-fingerprint-ml-features)
 - [D3.js Integration](#d3js-integration)
 - [SQL Schema](#sql-schema)
-- [Development](#development)
+- [Development & Installation](#development--installation)
 - [Testing](#testing)
 - [Troubleshooting](#troubleshooting)
 - [Roadmap](#roadmap)
@@ -40,406 +38,340 @@ StoryGraph Lab takes a structured **story JSON** (characters, relationships, the
 
 ---
 
+## Why StoryGraph Lab
+
+Most story analysis tools are qualitative. StoryGraph Lab is **quantitative-first**:
+
+- Stories become **graphs, vectors, and time series**
+- Narrative structure becomes **comparable across works**
+- Results are **machine-learning ready**
+- Visuals remain **human-readable and explorable**
+
+Use cases include:
+- Narrative analysis & research
+- Content similarity & recommendation systems
+- Creative tooling for writers
+- Media analytics & dashboards
+- Experimental storytelling + AI pipelines
+
+---
+
 ## What You Get
 
-**From a single story JSON**, you can generate:
+From **one story JSON**, StoryGraph Lab produces:
 
-### Visualizations (Plotly)
-- **Character Network**: nodes = characters, edges = relationships (weighted by intensity)
-- **Emotion Arcs**: joy/fear/anger/sadness/hope/tension over 10 bins (or more if you extend)
-- **Tension vs Pace**: tension time series against pacing time series
+### Visual Outputs (Plotly)
+- Character interaction network
+- Emotional arcs across story progression
+- Tension vs pacing comparison
 
-### Exports
-- `exports/html/*.html` → shareable interactive charts
-- `exports/d3/*.json` → graph data for D3 force layouts
-- `exports/fingerprints/*.csv` → fixed-length vectors for ML clustering
+### Data Exports
+- Plotly HTML dashboards (shareable)
+- D3-compatible graph JSON
+- CSV fingerprint vectors for ML
 
-### Dashboard (Plotly Dash)
-Upload a JSON file → instantly see charts → pipeline runs → exports saved automatically.
+### Interfaces
+- CLI for automation & batch runs
+- Web dashboard for upload → visualize → export
 
 ---
 
 ## Quick Start
 
-### 1) Create the repo structure
-
-Create this folder layout (or clone your repo and match it):
-
-```
-
-story-graph-lab/
-├─ README.md
-├─ requirements.txt
-├─ .gitignore
-├─ data/
-│  ├─ samples/
-│  │  └─ matrix_story.json
-│  └─ uploads/
-├─ exports/
-│  ├─ html/
-│  ├─ d3/
-│  ├─ fingerprints/
-│  └─ reports/
-└─ src/
-└─ storygraph/
-├─ **init**.py
-├─ schema/
-│  ├─ story.schema.json
-│  └─ sql/
-│     └─ schema.sql
-├─ io/
-│  ├─ load_json.py
-│  └─ normalize.py
-├─ graph/
-│  ├─ build_graph.py
-│  └─ export_d3.py
-├─ viz/
-│  ├─ plot_network.py
-│  ├─ plot_emotion.py
-│  └─ plot_tension_pace.py
-├─ features/
-│  ├─ fingerprint.py
-│  └─ ts_stats.py
-├─ pipeline/
-│  └─ run_pipeline.py
-└─ dashboard/
-└─ app.py
-
-````
-
-### 2) Install dependencies
-
-From repo root:
+### 1) Create a virtual environment and install dependencies
 
 ```bash
 python -m venv .venv
-# macOS/Linux
-source .venv/bin/activate
-# Windows (PowerShell)
-# .venv\Scripts\Activate.ps1
+source .venv/bin/activate    # macOS/Linux
+# .venv\Scripts\Activate.ps1 # Windows
 
 pip install -r requirements.txt
 ````
 
-### 3) Run the CLI pipeline
+### 2) Run the pipeline on a sample story
 
 ```bash
 python -c "from storygraph.pipeline.run_pipeline import run_pipeline; print(run_pipeline('data/samples/matrix_story.json', 'matrix_demo', repo_root='.'))"
 ```
 
-Then open:
+### 3) Open the generated HTML files
 
-* `exports/html/matrix_demo_network.html`
-* `exports/html/matrix_demo_emotion.html`
-* `exports/html/matrix_demo_tension_pace.html`
+```text
+exports/html/matrix_demo_network.html
+exports/html/matrix_demo_emotion.html
+exports/html/matrix_demo_tension_pace.html
+```
 
-### 4) Run the dashboard
+### 4) Launch the dashboard
 
 ```bash
 python src/storygraph/dashboard/app.py
 ```
 
-Open the URL Dash prints (usually `http://127.0.0.1:8050/`), upload a story JSON, and click **Generate**.
+Open the URL printed in the terminal (usually `http://127.0.0.1:8050`).
 
 ---
 
 ## Directory Structure
 
-### Key directories
-
-* `data/samples/`
-  Sample inputs (start here).
-* `data/uploads/`
-  JSON files uploaded via dashboard are saved here (timestamped).
-* `exports/html/`
-  Plotly HTML files generated by the pipeline.
-* `exports/d3/`
-  Graph JSON output for D3 force layouts.
-* `exports/fingerprints/`
-  CSV files containing fixed-length feature vectors for ML clustering.
-* `src/storygraph/`
-  All library code (io, graphs, viz, features, pipeline, dashboard).
+```
+story-graph-lab/
+├─ README.md
+├─ requirements.txt
+├─ .gitignore
+│
+├─ data/
+│  ├─ samples/                 # Example input stories
+│  │  └─ matrix_story.json
+│  └─ uploads/                 # Dashboard uploads (auto-created)
+│
+├─ exports/
+│  ├─ html/                    # Plotly HTML outputs
+│  ├─ d3/                      # D3 graph JSON
+│  ├─ fingerprints/            # ML-ready fingerprint CSVs
+│  └─ reports/                 # Reserved for future summaries
+│
+├─ src/
+│  └─ storygraph/
+│     ├─ schema/               # JSON + SQL contracts
+│     ├─ io/                   # Load + normalize
+│     ├─ graph/                # NetworkX graph logic
+│     ├─ viz/                  # Plotly visualizations
+│     ├─ features/             # Fingerprint feature extraction
+│     ├─ pipeline/             # End-to-end runner
+│     └─ dashboard/            # Plotly Dash app
+│
+└─ tests/                      # Optional unit tests
+```
 
 ---
 
 ## Input Format
 
-StoryGraph Lab expects a single **story JSON** that follows the contract in:
+StoryGraph Lab consumes a **single JSON file per story**, validated against:
 
-* `src/storygraph/schema/story.schema.json`
+```
+src/storygraph/schema/story.schema.json
+```
 
-### Required Fields
+### Required Top-Level Fields
 
-At minimum, your JSON should include these top-level keys:
+* `story_id`
+* `meta`
+* `structure`
+* `characters`
+* `relationships`
+* `timeseries`
+* `themes`
+* `global_scores`
 
-* `story_id` (string)
-* `meta` (object)
-* `structure` (object)
-* `characters` (array)
-* `relationships` (array)
-* `timeseries` (object)
-* `themes` (array)
-* `global_scores` (object)
+### Key Constraints
 
-**Notes**
+* Character IDs referenced in `relationships` **must exist**
+* All emotion and pacing arrays must be the **same length**
+* Numeric values must be numbers (not strings)
 
-* Character IDs in `relationships` must match the `characters[].id` values.
-* `timeseries.emotion` arrays must be the same length for each emotion dimension.
-* `timeseries.pacing` arrays must match the emotion length (same bin count).
+A complete, working example is included:
 
-### Example JSON
+```
+data/samples/matrix_story.json
+```
 
-A worked example is included (recommended starting point):
+---
 
-* `data/samples/matrix_story.json`
+## Sample Output Artifacts
+
+Below are **real outputs** generated from the included Matrix example.
+
+### 1) Character Network (Plotly HTML)
+
+**File:** `exports/html/matrix_demo_network.html`
+
+* Nodes = characters
+* Node size = relationship centrality
+* Edges = relationships (weighted by intensity)
+
+---
+
+### 2) Emotion Arcs Over Story Progression
+
+**File:** `exports/html/matrix_demo_emotion.html`
+
+* Multi-line time series (joy, fear, anger, sadness, hope, tension)
+* X-axis = story progression bins (default: 10)
+
+---
+
+### 3) Tension vs Pace Comparison
+
+**File:** `exports/html/matrix_demo_tension_pace.html`
+
+* Overlaid curves show how narrative tension tracks pacing
+* Useful for structure and rhythm analysis
+
+---
+
+### 4) D3 Graph Export
+
+**File:** `exports/d3/matrix_demo_graph.json`
+
+```json
+{
+  "nodes": [{ "id": "neo", "label": "Neo", "role": "protagonist" }],
+  "links": [{ "source": "neo", "target": "smith", "intensity": 9 }]
+}
+```
+
+Use directly in D3 force layouts or other graph tools.
+
+---
+
+### 5) Story Fingerprint Vector (CSV)
+
+**File:** `exports/fingerprints/matrix_demo_fingerprint.csv`
+
+* One row per story
+* Hundreds of numeric features
+* Designed for clustering, similarity search, and ML pipelines
 
 ---
 
 ## CLI Pipeline
 
-The pipeline is implemented in:
+Implemented in:
 
-* `src/storygraph/pipeline/run_pipeline.py`
+```
+src/storygraph/pipeline/run_pipeline.py
+```
 
 ### What it does
 
-1. Loads story JSON
-2. Validates against JSON Schema
-3. Normalizes into Pandas DataFrames
-4. Builds NetworkX character graph
-5. Generates Plotly figures
-6. Exports HTML + D3 JSON + fingerprint CSV
+1. Loads and validates story JSON
+2. Normalizes into Pandas DataFrames
+3. Builds character graph (NetworkX)
+4. Generates Plotly figures
+5. Writes HTML, D3 JSON, and fingerprint CSV
 
-### How to run
-
-From repo root:
+### Example
 
 ```bash
 python -c "from storygraph.pipeline.run_pipeline import run_pipeline; print(run_pipeline('data/samples/matrix_story.json', 'matrix_demo', repo_root='.'))"
 ```
 
-### Output naming
-
-* `out_prefix` controls output filenames (e.g., `matrix_demo_*`).
-* The story ID is included inside the fingerprint CSV as `story_id`.
-
 ---
 
 ## Dashboard
 
-The Dash app is in:
+The dashboard provides a **zero-code interface**.
 
-* `src/storygraph/dashboard/app.py`
+**Location:**
 
-### What it provides
+```
+src/storygraph/dashboard/app.py
+```
 
-* Drag & drop file upload for story JSON
-* Immediate interactive previews of all three plots
-* Automatically runs the same pipeline exports and saves results under `exports/`
+### Features
 
-### Run it
+* Drag & drop story JSON upload
+* Instant interactive graphs
+* Automatic export to `exports/`
+* Saved uploads for reproducibility
+
+### Run
 
 ```bash
 python src/storygraph/dashboard/app.py
 ```
 
-### Where uploaded JSONs go
-
-* Saved to: `data/uploads/`
-* File naming includes a timestamp to avoid collisions.
-
 ---
 
 ## Outputs
 
-After running pipeline (via CLI or dashboard), you’ll get:
+| Type            | Directory               |
+| --------------- | ----------------------- |
+| Plotly HTML     | `exports/html/`         |
+| D3 graph JSON   | `exports/d3/`           |
+| Fingerprint CSV | `exports/fingerprints/` |
 
-### Plotly HTML
+All outputs are deterministic given the same input JSON.
 
-Saved in `exports/html/`:
+---
 
-* `<prefix>_network.html`
-* `<prefix>_emotion.html`
-* `<prefix>_tension_pace.html`
+## Story Fingerprint (ML Features)
 
-### D3 Graph JSON
+The fingerprint is a **fixed-length numeric vector** created by:
 
-Saved in `exports/d3/`:
-
-* `<prefix>_graph.json`
-
-Format:
-
-```json
-{
-  "nodes": [{ "id": "neo", "label": "Neo", ... }],
-  "links": [{ "source": "neo", "target": "smith", "intensity": 9, ... }]
-}
 ```
-## Sample
+src/storygraph/features/fingerprint.py
+```
 
-Below are example outputs produced by running the pipeline on `data/samples/matrix_story.json`. These artifacts help you quickly understand what the system generates.
+### Feature Categories
 
-> Tip: After you run the CLI pipeline with `out_prefix=matrix_demo`, your files will appear under `exports/` with the same names.
+* Plot structure & beats
+* Graph topology statistics
+* Relationship intensity distributions
+* Theme aggregation metrics
+* Time-series summaries (mean, std, slope, peak, volatility)
 
-### 1) Interactive Character Network (Plotly HTML)
-**File:** `exports/html/matrix_demo_network.html`  
-**What it shows:** A force-directed character interaction network where:
-- nodes = characters (size scales with weighted degree / connection strength)
-- edges = relationships (weight derived from relationship intensity)
-
-**How to view:** Open the HTML file in your browser.
-
----
-
-### 2) Emotion Arcs Over Story Progression (Plotly HTML)
-**File:** `exports/html/matrix_demo_emotion.html`  
-**What it shows:** A multi-line time series of emotional dimensions (joy, fear, anger, sadness, hope, tension) across story bins (default: 10).
-
-**How to view:** Open the HTML file in your browser.
-
----
-
-### 3) Tension vs Pace Comparison (Plotly HTML)
-**File:** `exports/html/matrix_demo_tension_pace.html`  
-**What it shows:** Two overlaid curves:
-- tension (emotion dimension)
-- pace (pacing dimension)
-
-This is useful for seeing whether higher tension correlates with higher pace in a story.
-
-**How to view:** Open the HTML file in your browser.
-
----
-
-### 4) D3 Graph Export (Nodes + Links JSON)
-**File:** `exports/d3/matrix_demo_graph.json`  
-**What it contains:** A D3-ready format:
-
-```json
-{
-  "nodes": [{"id":"neo","label":"Neo","role":"protagonist", "...": "..."}],
-  "links": [{"source":"neo","target":"smith","rel_type":"enemy","intensity":9, "...": "..."}]
-}
-
-
-### Fingerprint CSV
-
-Saved in `exports/fingerprints/`:
-
-* `<prefix>_fingerprint.csv`
-
-One row per story, many columns of features.
-
----
-
-## Fingerprint
-
-The fingerprint is a **fixed-length numeric vector** designed for:
-
-* story clustering
-* similarity search
-* trend analysis across a library
-
-Created by:
-
-* `src/storygraph/features/fingerprint.py`
-* `src/storygraph/features/ts_stats.py`
-
-### Feature groups included
-
-* Plot structure scores (`plot_*`)
-* Beat locations (`beat_*`)
-* Global scores (`score_*`)
-* Graph statistics (density, degree mean/std, etc.)
-* Relationship distribution stats
-* Theme distribution stats
-* Time-series summaries for:
-
-  * emotions
-  * pace
-  * action_ratio
-
-### Clustering example (separate script idea)
-
-Once you have multiple fingerprint CSV files:
+### ML Example
 
 ```python
-import glob
-import pandas as pd
-from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+import pandas as pd, glob
 
-fps = [pd.read_csv(p) for p in glob.glob("exports/fingerprints/*_fingerprint.csv")]
-df = pd.concat(fps, ignore_index=True)
-
-story_ids = df["story_id"].values
-X = df.drop(columns=["story_id"]).values
-
-X = StandardScaler().fit_transform(X)
-labels = KMeans(n_clusters=5, random_state=42, n_init="auto").fit_predict(X)
-
-print(pd.DataFrame({"story_id": story_ids, "cluster": labels}).sort_values("cluster"))
+df = pd.concat([pd.read_csv(p) for p in glob.glob("exports/fingerprints/*.csv")])
+X = StandardScaler().fit_transform(df.drop(columns=["story_id"]))
+labels = KMeans(n_clusters=5).fit_predict(X)
 ```
 
 ---
 
 ## D3.js Integration
 
-The D3 export is designed to work directly with D3 force layout.
+Graph exports are compatible with D3 force layouts:
 
-1. Run pipeline and generate:
+```
+exports/d3/<prefix>_graph.json
+```
 
-   * `exports/d3/<prefix>_graph.json`
+Structure:
 
-2. Load it in a D3 page and render nodes/links using `source`/`target`.
+* `nodes[]`
+* `links[]`
 
-This project intentionally exports a clean `nodes/links` structure compatible with D3 v7 force simulations.
+No transformation required.
 
 ---
 
 ## SQL Schema
 
-A relational schema (PostgreSQL-style) is included in:
+A PostgreSQL-style relational schema is provided in:
 
-* `src/storygraph/schema/sql/schema.sql`
+```
+src/storygraph/schema/sql/schema.sql
+```
 
-Use it if you want to store:
-
-* stories
-* characters
-* relationships
-* themes
-* time-series bins
-* global scores
-
-This is optional: the pipeline runs without a database.
+Use this if you want to persist stories, graphs, and metrics in a database.
 
 ---
 
-## Development
+## Development & Installation
 
-### Recommended project layout
+### Python path
 
-This repo is structured as a Python package under `src/`:
+Run from repo root or set:
 
-* Import paths assume you run from repo root or install in editable mode.
+```bash
+export PYTHONPATH=src
+```
 
-### Editable install (optional but recommended)
+### Editable install (optional)
 
-If you add a minimal `pyproject.toml`, you can do:
+If you add `pyproject.toml`:
 
 ```bash
 pip install -e .
-```
-
-If you’re not using `pyproject.toml`, just run from repo root and ensure Python can find `src/`:
-
-```bash
-# macOS/Linux
-export PYTHONPATH=src
-# Windows PowerShell
-# $env:PYTHONPATH="src"
 ```
 
 ---
@@ -448,123 +380,58 @@ export PYTHONPATH=src
 
 Optional tests live under:
 
-* `tests/`
+```
+tests/
+```
 
-Suggested tests:
+Recommended focus areas:
 
-* fingerprint vector length stability
-* schema validation failure cases
-* graph construction edge cases (missing characters, empty relationships)
+* Fingerprint vector stability
+* Schema validation failures
+* Empty or sparse story edge cases
 
 ---
 
 ## Troubleshooting
 
-### Dashboard starts but upload fails
+**Module not found: `storygraph`**
 
-* Ensure `data/uploads/` exists (it is auto-created by the app).
-* Confirm `requirements.txt` is installed.
-* Check the console for schema validation errors.
+* Ensure `PYTHONPATH=src`
+* Or run from repo root
 
-### “Module not found: storygraph”
+**Dashboard uploads fail**
 
-Make sure you run from repo root with `PYTHONPATH=src` set, or install editable:
+* Check schema validation errors in terminal
+* Ensure JSON matches contract
 
-```bash
-export PYTHONPATH=src
-python src/storygraph/dashboard/app.py
-```
+**Blank Plotly HTML**
 
-### Schema validation errors
-
-Your JSON must match the required contract:
-
-* `characters[].id` must exist for all `relationships[].a/.b`
-* time-series arrays must have consistent lengths
-* numeric fields must be numeric (ints/floats)
-
-### Plotly HTML files are blank
-
-* Ensure Plotly is installed (`pip show plotly`)
-* Try opening the HTML in a modern browser
-* Confirm that data arrays contain numeric values (not strings)
+* Confirm numeric arrays
+* Open in modern browser
 
 ---
 
 ## Roadmap
 
-High-value extensions that fit naturally into this system:
+Planned extensions:
 
-* **Scene/chapter-level analysis**
-
-  * dynamic graphs over time (edge weights per scene)
-  * per-scene emotional arcs
-* **Automatic binning**
-
-  * allow arbitrary bin counts (10, 20, 50)
-* **Export bundle**
-
-  * one-click ZIP export (HTML + JSON + CSV)
-* **Story similarity API**
-
-  * load a fingerprint library and query nearest neighbors
-* **Dashboard enhancements**
-
-  * library view of all past exports
-  * compare two stories side-by-side
+* Scene/chapter-level granularity
+* Dynamic graphs over time
+* ZIP bundle exports
+* Story similarity search API
+* Dashboard comparison mode
+* Automatic bin detection
 
 ---
 
 ## License
 
-Choose one:
+Choose one and add a `LICENSE` file:
 
-* MIT (common for tooling)
-* Apache-2.0 (common for larger ecosystems)
-* Proprietary/internal
-
-Add a `LICENSE` file in repo root once you decide.
+* MIT
+* Apache-2.0
+* Proprietary / Internal
 
 ---
 
-## Appendix: requirements.txt
-
-Create `requirements.txt` in repo root:
-
-```txt
-pandas
-numpy
-networkx
-plotly
-dash
-jsonschema
-```
-
----
-
-## Appendix: .gitignore (suggested)
-
-```gitignore
-.venv/
-__pycache__/
-*.pyc
-exports/
-data/uploads/
-.DS_Store
-.ipynb_checkpoints/
-```
-
----
-
-## Contact / Contribution
-
-If you’re using this internally, treat `data/samples/` as your source of truth for new story JSON examples.
-
-For contributions:
-
-* keep schema backward compatible
-* add tests for feature vector stability when adding new features
-* version schema changes (e.g., `story.schema.v1.json`)
-
-```
-```
+**StoryGraph Lab turns narrative into data — without losing meaning.**
