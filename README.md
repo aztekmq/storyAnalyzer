@@ -28,6 +28,7 @@ StoryGraph Lab takes a structured **story JSON** (characters, relationships, the
 - [CLI Pipeline](#cli-pipeline)
 - [Dashboard](#dashboard)
 - [Outputs](#outputs)
+- [Samples](#sample)
 - [Fingerprint Vector (ML)](#fingerprint-vector-ml)
 - [D3.js Integration](#d3js-integration)
 - [SQL Schema](#sql-schema)
@@ -275,6 +276,52 @@ Format:
   "links": [{ "source": "neo", "target": "smith", "intensity": 9, ... }]
 }
 ```
+## Sample Output Artifacts (What You’ll See)
+
+Below are example outputs produced by running the pipeline on `data/samples/matrix_story.json`. These artifacts help you quickly understand what the system generates.
+
+> Tip: After you run the CLI pipeline with `out_prefix=matrix_demo`, your files will appear under `exports/` with the same names.
+
+### 1) Interactive Character Network (Plotly HTML)
+**File:** `exports/html/matrix_demo_network.html`  
+**What it shows:** A force-directed character interaction network where:
+- nodes = characters (size scales with weighted degree / connection strength)
+- edges = relationships (weight derived from relationship intensity)
+
+**How to view:** Open the HTML file in your browser.
+
+---
+
+### 2) Emotion Arcs Over Story Progression (Plotly HTML)
+**File:** `exports/html/matrix_demo_emotion.html`  
+**What it shows:** A multi-line time series of emotional dimensions (joy, fear, anger, sadness, hope, tension) across story bins (default: 10).
+
+**How to view:** Open the HTML file in your browser.
+
+---
+
+### 3) Tension vs Pace Comparison (Plotly HTML)
+**File:** `exports/html/matrix_demo_tension_pace.html`  
+**What it shows:** Two overlaid curves:
+- tension (emotion dimension)
+- pace (pacing dimension)
+
+This is useful for seeing whether higher tension correlates with higher pace in a story.
+
+**How to view:** Open the HTML file in your browser.
+
+---
+
+### 4) D3 Graph Export (Nodes + Links JSON)
+**File:** `exports/d3/matrix_demo_graph.json`  
+**What it contains:** A D3-ready format:
+
+```json
+{
+  "nodes": [{"id":"neo","label":"Neo","role":"protagonist", "...": "..."}],
+  "links": [{"source":"neo","target":"smith","rel_type":"enemy","intensity":9, "...": "..."}]
+}
+
 
 ### Fingerprint CSV
 
