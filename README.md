@@ -1,275 +1,157 @@
-* **Data schema** in **JSON**, **SQL**, and **Pandas**
-* A **Python pipeline** that:
+## Directory structure diagram
 
-  * loads a story JSON
-  * builds a **character interaction graph** (NetworkX)
-  * generates **Plotly** visualizations (network + arcs)
-  * exports graph JSON for **D3.js**
-* A **story “fingerprint” vector** (fixed-length numeric features for ML clustering)
-* A **worked example** using a real story: ***The Matrix (1999)***
-  (Scores are *illustrative/subjective*—the point is to show how the system works.)
-
----
-
-## 1) Data schema
-
-### 1A) JSON schema (practical “data contract”)
-
-This is a *compact* but algorithm-friendly structure.
-
-```json
-{
-  "story_id": "matrix_1999",
-  "meta": {
-    "title": "The Matrix",
-    "medium": "movie",
-    "year": 1999,
-    "genre_primary": "science fiction",
-    "genre_secondary": ["action", "cyberpunk"],
-    "length_minutes": 136,
-    "setting": {
-      "setting_type": "futuristic",
-      "locations": ["The Matrix (simulated)", "Machine City (implied)", "Zion (implied)"],
-      "time_span_days": 7
-    }
-  },
-  "structure": {
-    "model": "three_act",
-    "beats": {
-      "inciting_pct": 0.08,
-      "turn1_pct": 0.25,
-      "midpoint_pct": 0.52,
-      "lowpoint_pct": 0.72,
-      "climax_pct": 0.90,
-      "resolution_pct": 0.10
-    },
-    "plot": {
-      "major_plotlines": 1,
-      "subplots": 2,
-      "interweaving": 8,
-      "causality_clarity": 8,
-      "nonlinear_degree": 2
-    }
-  },
-  "characters": [
-    {"id": "neo", "name": "Neo", "role": "protagonist", "agency": 8, "moral": 4, "arc_type": "positive"},
-    {"id": "morpheus", "name": "Morpheus", "role": "mentor", "agency": 7, "moral": 4, "arc_type": "flat"},
-    {"id": "trinity", "name": "Trinity", "role": "ally", "agency": 7, "moral": 4, "arc_type": "flat"},
-    {"id": "smith", "name": "Agent Smith", "role": "antagonist", "agency": 9, "moral": -4, "arc_type": "flat"},
-    {"id": "cypher", "name": "Cypher", "role": "traitor", "agency": 6, "moral": -2, "arc_type": "negative"}
-  ],
-  "relationships": [
-    {
-      "a": "neo",
-      "b": "morpheus",
-      "type": "mentor",
-      "intensity": 8,
-      "volatility": 4,
-      "power": -2,
-      "outcome": "improved"
-    },
-    {
-      "a": "neo",
-      "b": "trinity",
-      "type": "love",
-      "intensity": 7,
-      "volatility": 3,
-      "power": 0,
-      "outcome": "improved"
-    },
-    {
-      "a": "neo",
-      "b": "smith",
-      "type": "enemy",
-      "intensity": 9,
-      "volatility": 8,
-      "power": 0,
-      "outcome": "escalated"
-    },
-    {
-      "a": "morpheus",
-      "b": "smith",
-      "type": "enemy",
-      "intensity": 8,
-      "volatility": 7,
-      "power": 1,
-      "outcome": "improved"
-    },
-    {
-      "a": "neo",
-      "b": "cypher",
-      "type": "betrayal",
-      "intensity": 7,
-      "volatility": 9,
-      "power": 0,
-      "outcome": "destroyed"
-    }
-  ],
-  "timeseries": {
-    "binning": {"bins": 10, "unit": "percent_of_story"},
-    "emotion": {
-      "joy":     [2,2,3,3,4,4,2,3,4,5],
-      "fear":    [3,4,5,5,6,6,7,7,8,6],
-      "anger":   [2,2,3,3,4,5,6,6,7,5],
-      "sadness": [1,1,2,2,3,3,4,4,5,3],
-      "hope":    [2,3,3,4,4,5,4,5,7,8],
-      "tension": [3,4,5,6,6,7,8,8,9,6]
-    },
-    "pacing": {
-      "pace": [5,6,6,7,6,6,7,8,9,6],
-      "action_ratio": [0.4,0.5,0.6,0.6,0.5,0.5,0.6,0.7,0.8,0.5]
-    }
-  },
-  "themes": [
-    {"name": "reality_vs_illusion", "explicitness": 9, "subtlety": 4, "consistency": 9, "resolution": 8},
-    {"name": "identity_and_choice", "explicitness": 8, "subtlety": 6, "consistency": 8, "resolution": 8},
-    {"name": "control_and_freedom", "explicitness": 8, "subtlety": 5, "consistency": 8, "resolution": 7}
-  ],
-  "global_scores": {
-    "emotional_range": 8,
-    "emotional_volatility": 7,
-    "stakes_clarity": 9,
-    "stakes_escalation": 8,
-    "coherence": 8,
-    "engagement": 9,
-    "ending_satisfaction": 8,
-    "originality": 9,
-    "predictability": 4,
-    "worldbuilding": 9,
-    "dialogue_quality": 7,
-    "symbolism_density": 7
-  }
-}
+```
+story-graph-lab/
+├─ README.md
+├─ pyproject.toml                (or requirements.txt)
+├─ .gitignore
+│
+├─ data/
+│  ├─ samples/
+│  │  └─ matrix_story.json       (worked example input)
+│  └─ uploads/                   (dashboard saves uploaded JSON here)
+│
+├─ exports/
+│  ├─ html/                      (plotly HTML outputs)
+│  ├─ d3/                        (graph JSON for D3)
+│  ├─ fingerprints/              (fingerprint CSV outputs)
+│  └─ reports/                   (optional: future summary reports)
+│
+├─ src/
+│  ├─ storygraph/
+│  │  ├─ __init__.py
+│  │  ├─ schema/
+│  │  │  ├─ story.schema.json    (JSON Schema contract)
+│  │  │  └─ sql/
+│  │  │     └─ schema.sql        (Postgres DDL)
+│  │  │
+│  │  ├─ io/
+│  │  │  ├─ load_json.py         (load/validate)
+│  │  │  └─ normalize.py         (JSON → Pandas dataframes)
+│  │  │
+│  │  ├─ graph/
+│  │  │  ├─ build_graph.py       (NetworkX graph construction)
+│  │  │  └─ export_d3.py         (NetworkX → D3 JSON)
+│  │  │
+│  │  ├─ viz/
+│  │  │  ├─ plot_network.py      (Plotly character network)
+│  │  │  ├─ plot_emotion.py      (Plotly emotion arcs)
+│  │  │  └─ plot_tension_pace.py (Plotly tension vs pace)
+│  │  │
+│  │  ├─ features/
+│  │  │  ├─ fingerprint.py       (story fingerprint vector)
+│  │  │  └─ ts_stats.py          (mean/std/slope/peak/etc)
+│  │  │
+│  │  ├─ pipeline/
+│  │  │  └─ run_pipeline.py      (end-to-end runner + exporters)
+│  │  │
+│  │  └─ dashboard/
+│  │     └─ app.py               (Plotly Dash upload dashboard)
+│  │
+│  └─ cli/
+│     └─ storygraph_cli.py       (optional CLI entry point)
+│
+└─ tests/
+   └─ test_fingerprint.py        (optional)
 ```
 
 ---
 
-### 1B) SQL schema (PostgreSQL style)
+## “Which object goes where?” mapping
 
-```sql
-CREATE TABLE story (
-  story_id TEXT PRIMARY KEY,
-  title TEXT NOT NULL,
-  medium TEXT NOT NULL,
-  year INT,
-  genre_primary TEXT,
-  length_minutes INT,
-  length_pages INT
-);
+### Schemas
 
-CREATE TABLE story_genre_secondary (
-  story_id TEXT REFERENCES story(story_id),
-  genre TEXT NOT NULL,
-  PRIMARY KEY (story_id, genre)
-);
+* **JSON schema** → `src/storygraph/schema/story.schema.json`
+* **SQL schema (DDL)** → `src/storygraph/schema/sql/schema.sql`
+* **Pandas “schema” (dataframe construction)** → `src/storygraph/io/normalize.py`
 
-CREATE TABLE character (
-  story_id TEXT REFERENCES story(story_id),
-  character_id TEXT,
-  name TEXT NOT NULL,
-  role TEXT,
-  agency INT,
-  moral INT,
-  arc_type TEXT,
-  PRIMARY KEY (story_id, character_id)
-);
+### Core pipeline objects
 
-CREATE TABLE relationship (
-  story_id TEXT REFERENCES story(story_id),
-  rel_id SERIAL PRIMARY KEY,
-  a_character_id TEXT NOT NULL,
-  b_character_id TEXT NOT NULL,
-  rel_type TEXT NOT NULL,
-  intensity INT,
-  volatility INT,
-  power INT,
-  outcome TEXT,
-  FOREIGN KEY (story_id, a_character_id) REFERENCES character(story_id, character_id),
-  FOREIGN KEY (story_id, b_character_id) REFERENCES character(story_id, character_id)
-);
+* JSON loader + (optional) validation → `src/storygraph/io/load_json.py`
+* JSON → DataFrames normalization → `src/storygraph/io/normalize.py`
+* NetworkX graph build → `src/storygraph/graph/build_graph.py`
+* Export to D3 JSON → `src/storygraph/graph/export_d3.py`
+* Plotly charts → `src/storygraph/viz/*.py`
+* Fingerprint vector builder → `src/storygraph/features/fingerprint.py` and `ts_stats.py`
+* End-to-end runner that writes outputs → `src/storygraph/pipeline/run_pipeline.py`
 
-CREATE TABLE theme (
-  story_id TEXT REFERENCES story(story_id),
-  theme_name TEXT,
-  explicitness INT,
-  subtlety INT,
-  consistency INT,
-  resolution INT,
-  PRIMARY KEY (story_id, theme_name)
-);
+### Dashboard
 
-CREATE TABLE timeseries_emotion (
-  story_id TEXT REFERENCES story(story_id),
-  bin_index INT,
-  joy INT, fear INT, anger INT, sadness INT, hope INT, tension INT,
-  PRIMARY KEY (story_id, bin_index)
-);
+* Plotly Dash app (upload JSON, generate graphs, export files) → `src/storygraph/dashboard/app.py`
 
-CREATE TABLE timeseries_pacing (
-  story_id TEXT REFERENCES story(story_id),
-  bin_index INT,
-  pace INT,
-  action_ratio REAL,
-  PRIMARY KEY (story_id, bin_index)
-);
+### Data + exports
 
-CREATE TABLE global_scores (
-  story_id TEXT PRIMARY KEY REFERENCES story(story_id),
-  emotional_range INT,
-  emotional_volatility INT,
-  stakes_clarity INT,
-  stakes_escalation INT,
-  coherence INT,
-  engagement INT,
-  ending_satisfaction INT,
-  originality INT,
-  predictability INT,
-  worldbuilding INT,
-  dialogue_quality INT,
-  symbolism_density INT
-);
+* Example input JSON(s) → `data/samples/`
+* Dashboard uploads (saved) → `data/uploads/`
+* Generated outputs:
+
+  * HTML → `exports/html/`
+  * D3 graph JSON → `exports/d3/`
+  * Fingerprints CSV → `exports/fingerprints/`
+
+---
+
+## Minimal file contents (copy/paste)
+
+### 1) `requirements.txt` (repo root)
+
+```txt
+pandas
+numpy
+networkx
+plotly
+dash
+jsonschema
 ```
 
 ---
 
-### 1C) Pandas schema (recommended “dataframes”)
-
-* `df_story` (1 row/story)
-* `df_characters`
-* `df_relationships`
-* `df_emotion_ts`
-* `df_pacing_ts`
-* `df_themes`
-* `df_global_scores`
-
-(You’ll see the exact construction in the pipeline code below.)
-
----
-
-## 2) Python pipeline (NetworkX + Plotly + D3 export)
-
-This is a single-file script you can run.
+### 2) `src/storygraph/io/load_json.py`
 
 ```python
-# story_graph_pipeline.py
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
-from typing import Any, Dict, List, Tuple
+from pathlib import Path
+from typing import Any, Dict, Optional
 
-import numpy as np
-import pandas as pd
-import networkx as nx
-import plotly.graph_objects as go
+from jsonschema import validate
 
 
-# -----------------------------
-# Load + normalize
-# -----------------------------
-def load_story_json(path: str) -> Dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as f:
+def load_story_json(path: str | Path) -> Dict[str, Any]:
+    path = Path(path)
+    with path.open("r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def load_json_schema(path: str | Path) -> Dict[str, Any]:
+    path = Path(path)
+    with path.open("r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def validate_story(story: Dict[str, Any], schema: Dict[str, Any]) -> None:
+    # Raises jsonschema.ValidationError if invalid
+    validate(instance=story, schema=schema)
+
+
+def load_and_validate(story_path: str | Path, schema_path: Optional[str | Path] = None) -> Dict[str, Any]:
+    story = load_story_json(story_path)
+    if schema_path:
+        schema = load_json_schema(schema_path)
+        validate_story(story, schema)
+    return story
+```
+
+---
+
+### 3) `src/storygraph/io/normalize.py`
+
+```python
+from __future__ import annotations
+
+from typing import Any, Dict
+import pandas as pd
 
 
 def to_dataframes(story: Dict[str, Any]) -> Dict[str, pd.DataFrame]:
@@ -294,30 +176,23 @@ def to_dataframes(story: Dict[str, Any]) -> Dict[str, pd.DataFrame]:
     }])
 
     df_characters = pd.DataFrame(story.get("characters", []))
-    df_characters.insert(0, "story_id", story["story_id"])
+    if not df_characters.empty:
+        df_characters.insert(0, "story_id", story["story_id"])
 
     df_relationships = pd.DataFrame(story.get("relationships", []))
-    df_relationships.insert(0, "story_id", story["story_id"])
+    if not df_relationships.empty:
+        df_relationships.insert(0, "story_id", story["story_id"])
 
-    # timeseries: emotion
     emo = story["timeseries"]["emotion"]
     bins = len(next(iter(emo.values())))
-    df_emotion_ts = pd.DataFrame({
-        "story_id": [story["story_id"]] * bins,
-        "bin": list(range(bins)),
-        **emo
-    })
+    df_emotion_ts = pd.DataFrame({"story_id": [story["story_id"]] * bins, "bin": list(range(bins)), **emo})
 
-    # timeseries: pacing
     pac = story["timeseries"]["pacing"]
-    df_pacing_ts = pd.DataFrame({
-        "story_id": [story["story_id"]] * bins,
-        "bin": list(range(bins)),
-        **pac
-    })
+    df_pacing_ts = pd.DataFrame({"story_id": [story["story_id"]] * bins, "bin": list(range(bins)), **pac})
 
     df_themes = pd.DataFrame(story.get("themes", []))
-    df_themes.insert(0, "story_id", story["story_id"])
+    if not df_themes.empty:
+        df_themes.insert(0, "story_id", story["story_id"])
 
     df_global_scores = pd.DataFrame([{"story_id": story["story_id"], **gs}])
 
@@ -330,81 +205,95 @@ def to_dataframes(story: Dict[str, Any]) -> Dict[str, pd.DataFrame]:
         "themes": df_themes,
         "global_scores": df_global_scores,
     }
+```
+
+---
+
+### 4) `src/storygraph/graph/build_graph.py`
+
+```python
+from __future__ import annotations
+
+import networkx as nx
+import pandas as pd
 
 
-# -----------------------------
-# Graph building
-# -----------------------------
 def build_character_graph(df_characters: pd.DataFrame, df_relationships: pd.DataFrame) -> nx.Graph:
     G = nx.Graph()
 
-    # nodes
-    for _, row in df_characters.iterrows():
-        G.add_node(
-            row["id"],
-            label=row["name"],
-            role=row.get("role"),
-            agency=int(row.get("agency", 0)),
-            moral=int(row.get("moral", 0)),
-            arc_type=row.get("arc_type"),
-        )
+    if df_characters is not None and not df_characters.empty:
+        for _, row in df_characters.iterrows():
+            G.add_node(
+                row["id"],
+                label=row.get("name"),
+                role=row.get("role"),
+                agency=int(row.get("agency", 0) or 0),
+                moral=int(row.get("moral", 0) or 0),
+                arc_type=row.get("arc_type"),
+            )
 
-    # edges
-    for _, r in df_relationships.iterrows():
-        a, b = r["a"], r["b"]
-        if a not in G.nodes or b not in G.nodes:
-            continue
-        G.add_edge(
-            a, b,
-            rel_type=r.get("type"),
-            intensity=int(r.get("intensity", 0)),
-            volatility=int(r.get("volatility", 0)),
-            power=int(r.get("power", 0)),
-            outcome=r.get("outcome"),
-            weight=float(r.get("intensity", 1))  # used for layout or centrality
-        )
+    if df_relationships is not None and not df_relationships.empty:
+        for _, r in df_relationships.iterrows():
+            a, b = r.get("a"), r.get("b")
+            if a not in G.nodes or b not in G.nodes:
+                continue
+            intensity = int(r.get("intensity", 0) or 0)
+            G.add_edge(
+                a, b,
+                rel_type=r.get("type"),
+                intensity=intensity,
+                volatility=int(r.get("volatility", 0) or 0),
+                power=int(r.get("power", 0) or 0),
+                outcome=r.get("outcome"),
+                weight=float(intensity if intensity > 0 else 1.0),
+            )
 
     return G
+```
+
+---
+
+### 5) `src/storygraph/graph/export_d3.py`
+
+```python
+from __future__ import annotations
+
+from typing import Any, Dict
+import networkx as nx
 
 
 def export_d3_json(G: nx.Graph) -> Dict[str, Any]:
-    nodes = []
-    for n, data in G.nodes(data=True):
-        nodes.append({"id": n, **data})
-
-    links = []
-    for u, v, data in G.edges(data=True):
-        links.append({"source": u, "target": v, **data})
-
+    nodes = [{"id": n, **data} for n, data in G.nodes(data=True)]
+    links = [{"source": u, "target": v, **data} for u, v, data in G.edges(data=True)]
     return {"nodes": nodes, "links": links}
+```
+
+---
+
+### 6) `src/storygraph/viz/plot_network.py`
+
+```python
+from __future__ import annotations
+
+import networkx as nx
+import plotly.graph_objects as go
 
 
-# -----------------------------
-# Plotly visualization
-# -----------------------------
-def plot_network(G: nx.Graph, title: str = "Character Network") -> go.Figure:
+def plot_network(G: nx.Graph, title: str) -> go.Figure:
     if G.number_of_nodes() == 0:
-        return go.Figure()
+        return go.Figure().update_layout(title=title)
 
     pos = nx.spring_layout(G, seed=42, k=0.8, weight="weight")
 
-    # edges
     edge_x, edge_y = [], []
-    edge_text = []
-    for u, v, d in G.edges(data=True):
+    for u, v in G.edges():
         x0, y0 = pos[u]
         x1, y1 = pos[v]
         edge_x += [x0, x1, None]
         edge_y += [y0, y1, None]
-        edge_text.append(f"{G.nodes[u].get('label')} ↔ {G.nodes[v].get('label')} | {d.get('rel_type')} | intensity={d.get('intensity')}")
 
-    edge_trace = go.Scatter(
-        x=edge_x, y=edge_y,
-        mode="lines",
-        hoverinfo="none"
-    )
+    edge_trace = go.Scatter(x=edge_x, y=edge_y, mode="lines", hoverinfo="none")
 
-    # nodes
     node_x, node_y, node_text, node_size = [], [], [], []
     for n, data in G.nodes(data=True):
         x, y = pos[n]
@@ -414,7 +303,6 @@ def plot_network(G: nx.Graph, title: str = "Character Network") -> go.Figure:
             f"role={data.get('role')}<br>"
             f"agency={data.get('agency')} moral={data.get('moral')} arc={data.get('arc_type')}"
         )
-        # size based on weighted degree
         node_size.append(10 + 4 * sum(d.get("weight", 1) for _, _, d in G.edges(n, data=True)))
 
     node_trace = go.Scatter(
@@ -424,65 +312,79 @@ def plot_network(G: nx.Graph, title: str = "Character Network") -> go.Figure:
         textposition="top center",
         hovertext=node_text,
         hoverinfo="text",
-        marker=dict(size=node_size)
+        marker=dict(size=node_size),
     )
 
     fig = go.Figure(data=[edge_trace, node_trace])
-    fig.update_layout(
-        title=title,
-        showlegend=False,
-        margin=dict(l=20, r=20, t=40, b=20)
-    )
+    fig.update_layout(title=title, showlegend=False, margin=dict(l=20, r=20, t=40, b=20))
     return fig
+```
+
+---
+
+### 7) `src/storygraph/viz/plot_emotion.py`
+
+```python
+from __future__ import annotations
+
+import pandas as pd
+import plotly.graph_objects as go
 
 
-def plot_timeseries(df_emotion_ts: pd.DataFrame, title: str = "Emotion Arcs") -> go.Figure:
+def plot_emotion_arcs(df_emotion_ts: pd.DataFrame, title: str) -> go.Figure:
     fig = go.Figure()
     x = df_emotion_ts["bin"]
-
     for col in ["joy", "fear", "anger", "sadness", "hope", "tension"]:
         if col in df_emotion_ts.columns:
             fig.add_trace(go.Scatter(x=x, y=df_emotion_ts[col], mode="lines+markers", name=col))
-
-    fig.update_layout(
-        title=title,
-        xaxis_title="Story bin (0..9)",
-        yaxis_title="Intensity (0..10)",
-        margin=dict(l=40, r=20, t=40, b=40),
-    )
+    fig.update_layout(title=title, xaxis_title="Story bin", yaxis_title="Intensity (0..10)",
+                      margin=dict(l=40, r=20, t=40, b=40))
     return fig
+```
+
+---
+
+### 8) `src/storygraph/viz/plot_tension_pace.py`
+
+```python
+from __future__ import annotations
+
+import pandas as pd
+import plotly.graph_objects as go
 
 
-def plot_tension_vs_pace(df_emotion_ts: pd.DataFrame, df_pacing_ts: pd.DataFrame, title: str = "Tension vs Pace") -> go.Figure:
+def plot_tension_vs_pace(df_emotion_ts: pd.DataFrame, df_pacing_ts: pd.DataFrame, title: str) -> go.Figure:
     fig = go.Figure()
     x = df_emotion_ts["bin"]
     fig.add_trace(go.Scatter(x=x, y=df_emotion_ts["tension"], mode="lines+markers", name="tension"))
     fig.add_trace(go.Scatter(x=x, y=df_pacing_ts["pace"], mode="lines+markers", name="pace"))
-    fig.update_layout(
-        title=title,
-        xaxis_title="Story bin",
-        yaxis_title="Value",
-        margin=dict(l=40, r=20, t=40, b=40),
-    )
+    fig.update_layout(title=title, xaxis_title="Story bin", yaxis_title="Value",
+                      margin=dict(l=40, r=20, t=40, b=40))
     return fig
+```
+
+---
+
+### 9) `src/storygraph/features/ts_stats.py`
+
+```python
+from __future__ import annotations
+
+from typing import Dict
+import numpy as np
 
 
-# -----------------------------
-# Fingerprint vector (ML features)
-# -----------------------------
 def summarize_ts(arr: np.ndarray) -> Dict[str, float]:
-    """
-    Produces stable features for clustering:
-    - mean, std, slope, peak, peak_pos, area, volatility (mean abs diff)
-    """
     arr = np.asarray(arr, dtype=float)
     n = len(arr)
     x = np.arange(n, dtype=float)
+
     slope = float(np.polyfit(x, arr, 1)[0]) if n >= 2 else 0.0
     peak = float(arr.max()) if n else 0.0
     peak_pos = float(arr.argmax() / max(n - 1, 1)) if n else 0.0
     volatility = float(np.mean(np.abs(np.diff(arr)))) if n >= 2 else 0.0
-    area = float(arr.mean())  # normalized area proxy
+    area = float(arr.mean()) if n else 0.0
+
     return {
         "mean": float(arr.mean()) if n else 0.0,
         "std": float(arr.std()) if n else 0.0,
@@ -492,6 +394,22 @@ def summarize_ts(arr: np.ndarray) -> Dict[str, float]:
         "area": area,
         "volatility": volatility,
     }
+```
+
+---
+
+### 10) `src/storygraph/features/fingerprint.py`
+
+```python
+from __future__ import annotations
+
+from typing import Dict, List, Tuple
+import numpy as np
+import pandas as pd
+import networkx as nx
+
+from storygraph.graph.build_graph import build_character_graph
+from storygraph.features.ts_stats import summarize_ts
 
 
 def build_fingerprint(
@@ -502,27 +420,18 @@ def build_fingerprint(
     df_pacing_ts: pd.DataFrame,
     df_themes: pd.DataFrame,
 ) -> Tuple[np.ndarray, List[str]]:
-    """
-    Returns (vector, feature_names) fixed-length.
-    Great for clustering (k-means, HDBSCAN, etc.)
-    """
     features: Dict[str, float] = {}
 
-    # --- Global numeric scores from df_story
     row = df_story.iloc[0].to_dict()
-    keep_prefixes = ["plot_", "beat_", "score_"]
     for k, v in row.items():
-        if any(k.startswith(p) for p in keep_prefixes):
+        if any(k.startswith(p) for p in ["plot_", "beat_", "score_"]):
             if isinstance(v, (int, float, np.number)) and pd.notna(v):
                 features[k] = float(v)
 
-    # --- Character graph stats
     G = build_character_graph(df_characters, df_relationships)
     n_nodes = G.number_of_nodes()
-    n_edges = G.number_of_edges()
-
     features["graph_nodes"] = float(n_nodes)
-    features["graph_edges"] = float(n_edges)
+    features["graph_edges"] = float(G.number_of_edges())
     features["graph_density"] = float(nx.density(G)) if n_nodes > 1 else 0.0
 
     if n_nodes:
@@ -533,12 +442,6 @@ def build_fingerprint(
         features["graph_degree_mean"] = 0.0
         features["graph_degree_std"] = 0.0
 
-    if n_nodes > 2 and nx.is_connected(G):
-        features["graph_avg_path"] = float(nx.average_shortest_path_length(G))
-    else:
-        features["graph_avg_path"] = 0.0
-
-    # --- Relationship intensity distribution
     if len(df_relationships):
         features["rel_intensity_mean"] = float(df_relationships["intensity"].mean())
         features["rel_intensity_std"] = float(df_relationships["intensity"].std(ddof=0))
@@ -548,7 +451,6 @@ def build_fingerprint(
         features["rel_intensity_std"] = 0.0
         features["rel_volatility_mean"] = 0.0
 
-    # --- Theme stats
     features["theme_count"] = float(len(df_themes))
     if len(df_themes):
         for col in ["explicitness", "subtlety", "consistency", "resolution"]:
@@ -559,181 +461,243 @@ def build_fingerprint(
             features[f"theme_{col}_mean"] = 0.0
             features[f"theme_{col}_std"] = 0.0
 
-    # --- Timeseries summaries (emotion + pacing)
     for series_name in ["joy", "fear", "anger", "sadness", "hope", "tension"]:
         stats = summarize_ts(df_emotion_ts[series_name].to_numpy())
         for stat_name, val in stats.items():
-            features[f"emo_{series_name}_{stat_name}"] = val
+            features[f"emo_{series_name}_{stat_name}"] = float(val)
 
-    stats = summarize_ts(df_pacing_ts["pace"].to_numpy())
-    for stat_name, val in stats.items():
-        features[f"pace_{stat_name}"] = val
+    for col, prefix in [("pace", "pace"), ("action_ratio", "actionratio")]:
+        stats = summarize_ts(df_pacing_ts[col].to_numpy())
+        for stat_name, val in stats.items():
+            features[f"{prefix}_{stat_name}"] = float(val)
 
-    stats = summarize_ts(df_pacing_ts["action_ratio"].to_numpy())
-    for stat_name, val in stats.items():
-        features[f"actionratio_{stat_name}"] = val
-
-    # stable ordering
     feature_names = sorted(features.keys())
     vector = np.array([features[k] for k in feature_names], dtype=float)
     return vector, feature_names
+```
+
+---
+
+### 11) `src/storygraph/pipeline/run_pipeline.py`
+
+```python
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import Any, Dict
+
+import pandas as pd
+
+from storygraph.io.load_json import load_and_validate
+from storygraph.io.normalize import to_dataframes
+from storygraph.graph.build_graph import build_character_graph
+from storygraph.graph.export_d3 import export_d3_json
+from storygraph.viz.plot_network import plot_network
+from storygraph.viz.plot_emotion import plot_emotion_arcs
+from storygraph.viz.plot_tension_pace import plot_tension_vs_pace
+from storygraph.features.fingerprint import build_fingerprint
 
 
-# -----------------------------
-# Main runner
-# -----------------------------
-def run(path: str, out_prefix: str = "out_matrix") -> None:
-    story = load_story_json(path)
+def ensure_dirs(base: Path) -> Dict[str, Path]:
+    paths = {
+        "html": base / "exports" / "html",
+        "d3": base / "exports" / "d3",
+        "fingerprints": base / "exports" / "fingerprints",
+    }
+    for p in paths.values():
+        p.mkdir(parents=True, exist_ok=True)
+    return paths
+
+
+def run_pipeline(story_path: str | Path, out_prefix: str, repo_root: str | Path = ".") -> Dict[str, Path]:
+    repo_root = Path(repo_root).resolve()
+    out_dirs = ensure_dirs(repo_root)
+
+    schema_path = repo_root / "src" / "storygraph" / "schema" / "story.schema.json"
+    story: Dict[str, Any] = load_and_validate(story_path, schema_path=str(schema_path))
+
     dfs = to_dataframes(story)
-
     G = build_character_graph(dfs["characters"], dfs["relationships"])
 
-    # Visuals
-    fig_net = plot_network(G, title=f"Character Network — {story['meta']['title']}")
-    fig_emo = plot_timeseries(dfs["emotion_ts"], title=f"Emotion Arcs — {story['meta']['title']}")
-    fig_tp = plot_tension_vs_pace(dfs["emotion_ts"], dfs["pacing_ts"], title=f"Tension vs Pace — {story['meta']['title']}")
+    title = story["meta"]["title"]
 
-    fig_net.write_html(f"{out_prefix}_network.html")
-    fig_emo.write_html(f"{out_prefix}_emotion.html")
-    fig_tp.write_html(f"{out_prefix}_tension_pace.html")
+    fig_net = plot_network(G, f"Character Network — {title}")
+    fig_emo = plot_emotion_arcs(dfs["emotion_ts"], f"Emotion Arcs — {title}")
+    fig_tp = plot_tension_vs_pace(dfs["emotion_ts"], dfs["pacing_ts"], f"Tension vs Pace — {title}")
 
-    # D3 export
-    d3 = export_d3_json(G)
-    with open(f"{out_prefix}_d3_graph.json", "w", encoding="utf-8") as f:
-        json.dump(d3, f, indent=2)
+    net_html = out_dirs["html"] / f"{out_prefix}_network.html"
+    emo_html = out_dirs["html"] / f"{out_prefix}_emotion.html"
+    tp_html = out_dirs["html"] / f"{out_prefix}_tension_pace.html"
 
-    # Fingerprint
+    fig_net.write_html(str(net_html))
+    fig_emo.write_html(str(emo_html))
+    fig_tp.write_html(str(tp_html))
+
+    d3_json = out_dirs["d3"] / f"{out_prefix}_graph.json"
+    with d3_json.open("w", encoding="utf-8") as f:
+        json.dump(export_d3_json(G), f, indent=2)
+
     vec, names = build_fingerprint(
         dfs["story"], dfs["characters"], dfs["relationships"],
         dfs["emotion_ts"], dfs["pacing_ts"], dfs["themes"]
     )
     fp = pd.DataFrame([vec], columns=names)
     fp.insert(0, "story_id", story["story_id"])
-    fp.to_csv(f"{out_prefix}_fingerprint.csv", index=False)
 
-    print("Wrote:")
-    print(f"  {out_prefix}_network.html")
-    print(f"  {out_prefix}_emotion.html")
-    print(f"  {out_prefix}_tension_pace.html")
-    print(f"  {out_prefix}_d3_graph.json")
-    print(f"  {out_prefix}_fingerprint.csv")
+    fp_csv = out_dirs["fingerprints"] / f"{out_prefix}_fingerprint.csv"
+    fp.to_csv(fp_csv, index=False)
+
+    return {
+        "network_html": net_html,
+        "emotion_html": emo_html,
+        "tension_pace_html": tp_html,
+        "d3_json": d3_json,
+        "fingerprint_csv": fp_csv,
+    }
+```
+
+---
+
+## Plotly Dash dashboard (upload JSON → auto graphs + exports)
+
+### 12) `src/storygraph/dashboard/app.py`
+
+```python
+from __future__ import annotations
+
+import base64
+from pathlib import Path
+from datetime import datetime
+
+import dash
+from dash import dcc, html, Input, Output, State
+import plotly.io as pio
+
+from storygraph.pipeline.run_pipeline import run_pipeline
+from storygraph.io.load_json import load_story_json
+from storygraph.io.normalize import to_dataframes
+from storygraph.graph.build_graph import build_character_graph
+from storygraph.viz.plot_network import plot_network
+from storygraph.viz.plot_emotion import plot_emotion_arcs
+from storygraph.viz.plot_tension_pace import plot_tension_vs_pace
+
+
+REPO_ROOT = Path(__file__).resolve().parents[3]  # story-graph-lab/
+UPLOAD_DIR = REPO_ROOT / "data" / "uploads"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+app = dash.Dash(__name__)
+app.title = "StoryGraph Dashboard"
+
+app.layout = html.Div(
+    style={"maxWidth": "1100px", "margin": "20px auto", "fontFamily": "system-ui"},
+    children=[
+        html.H2("StoryGraph Dashboard"),
+        html.Div("Upload a story JSON to auto-generate graphs + exports (HTML, D3 JSON, fingerprint CSV)."),
+
+        dcc.Upload(
+            id="upload-json",
+            children=html.Div(["Drag & drop or ", html.A("select a story JSON file")]),
+            style={
+                "width": "100%", "height": "70px", "lineHeight": "70px",
+                "borderWidth": "2px", "borderStyle": "dashed", "borderRadius": "10px",
+                "textAlign": "center", "marginTop": "12px"
+            },
+            multiple=False
+        ),
+
+        html.Div(style={"marginTop": "12px"}, children=[
+            html.Label("Output prefix (optional)"),
+            dcc.Input(id="out-prefix", type="text", placeholder="e.g., matrix_run1", style={"width": "320px"}),
+            html.Button("Generate", id="btn-generate", n_clicks=0, style={"marginLeft": "10px"}),
+        ]),
+
+        html.Hr(),
+
+        html.Div(id="status", style={"whiteSpace": "pre-wrap"}),
+
+        html.Div(style={"display": "grid", "gridTemplateColumns": "1fr", "gap": "18px", "marginTop": "16px"}, children=[
+            dcc.Graph(id="fig-network"),
+            dcc.Graph(id="fig-emotion"),
+            dcc.Graph(id="fig-tension-pace"),
+        ]),
+    ]
+)
+
+
+def _save_upload(contents: str, filename: str) -> Path:
+    content_type, content_string = contents.split(",", 1)
+    decoded = base64.b64decode(content_string)
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_name = filename.replace(" ", "_")
+    path = UPLOAD_DIR / f"{ts}__{safe_name}"
+    path.write_bytes(decoded)
+    return path
+
+
+@app.callback(
+    Output("status", "children"),
+    Output("fig-network", "figure"),
+    Output("fig-emotion", "figure"),
+    Output("fig-tension-pace", "figure"),
+    Input("btn-generate", "n_clicks"),
+    State("upload-json", "contents"),
+    State("upload-json", "filename"),
+    State("out-prefix", "value"),
+    prevent_initial_call=True
+)
+def generate(n_clicks: int, contents: str | None, filename: str | None, out_prefix: str | None):
+    if not contents or not filename:
+        return "No file uploaded.", {}, {}, {}
+
+    # Save upload
+    saved_path = _save_upload(contents, filename)
+
+    # Compute live figures (immediate display)
+    story = load_story_json(saved_path)
+    dfs = to_dataframes(story)
+    G = build_character_graph(dfs["characters"], dfs["relationships"])
+
+    title = story["meta"]["title"]
+    fig_net = plot_network(G, f"Character Network — {title}")
+    fig_emo = plot_emotion_arcs(dfs["emotion_ts"], f"Emotion Arcs — {title}")
+    fig_tp = plot_tension_vs_pace(dfs["emotion_ts"], dfs["pacing_ts"], f"Tension vs Pace — {title}")
+
+    # Exports (HTML, D3 JSON, fingerprint CSV)
+    prefix = (out_prefix or story.get("story_id") or "story").strip()
+    outputs = run_pipeline(saved_path, out_prefix=prefix, repo_root=REPO_ROOT)
+
+    status = (
+        f"Uploaded: {saved_path}\n\n"
+        f"Exports written:\n"
+        f"- Network HTML: {outputs['network_html']}\n"
+        f"- Emotion HTML: {outputs['emotion_html']}\n"
+        f"- Tension/Pace HTML: {outputs['tension_pace_html']}\n"
+        f"- D3 graph JSON: {outputs['d3_json']}\n"
+        f"- Fingerprint CSV: {outputs['fingerprint_csv']}\n"
+    )
+    return status, fig_net, fig_emo, fig_tp
 
 
 if __name__ == "__main__":
-    # Example:
-    # python story_graph_pipeline.py matrix_story.json
-    import sys
-    if len(sys.argv) < 2:
-        raise SystemExit("Usage: python story_graph_pipeline.py <story.json> [out_prefix]")
-    in_path = sys.argv[1]
-    prefix = sys.argv[2] if len(sys.argv) >= 3 else "out_story"
-    run(in_path, prefix)
+    app.run(debug=True)
 ```
 
 ---
 
-## 3) D3.js usage (minimal example)
+## How to run
 
-Once you have `out_matrix_d3_graph.json`, you can visualize it with D3 force layout. Here’s a minimal sketch:
-
-```html
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8"/>
-  <script src="https://d3js.org/d3.v7.min.js"></script>
-</head>
-<body>
-<svg id="viz" width="900" height="600"></svg>
-<script>
-(async function () {
-  const data = await d3.json("out_matrix_d3_graph.json");
-  const svg = d3.select("#viz");
-  const width = +svg.attr("width"), height = +svg.attr("height");
-
-  const sim = d3.forceSimulation(data.nodes)
-    .force("link", d3.forceLink(data.links).id(d => d.id).distance(140))
-    .force("charge", d3.forceManyBody().strength(-420))
-    .force("center", d3.forceCenter(width/2, height/2));
-
-  const link = svg.append("g")
-    .selectAll("line").data(data.links).enter().append("line")
-    .attr("stroke", "#999").attr("stroke-opacity", 0.6);
-
-  const node = svg.append("g")
-    .selectAll("circle").data(data.nodes).enter().append("circle")
-    .attr("r", 10).attr("fill", "#555")
-    .call(d3.drag()
-      .on("start", dragstarted)
-      .on("drag", dragged)
-      .on("end", dragended));
-
-  const label = svg.append("g")
-    .selectAll("text").data(data.nodes).enter().append("text")
-    .text(d => d.label).attr("font-size", 12).attr("dx", 12).attr("dy", 4);
-
-  sim.on("tick", () => {
-    link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
-        .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
-    node.attr("cx", d => d.x).attr("cy", d => d.y);
-    label.attr("x", d => d.x).attr("y", d => d.y);
-  });
-
-  function dragstarted(event, d) { if (!event.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
-  function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
-  function dragended(event, d) { if (!event.active) sim.alphaTarget(0); d.fx = null; d.fy = null; }
-})();
-</script>
-</body>
-</html>
-```
-
----
-
-## 4) Worked example: “The Matrix (1999)”
-
-1. Save the example JSON above as:
-
-`matrix_story.json`
-
-2. Run:
+### CLI pipeline
 
 ```bash
-pip install pandas numpy networkx plotly
-python story_graph_pipeline.py matrix_story.json out_matrix
+pip install -r requirements.txt
+python -c "from storygraph.pipeline.run_pipeline import run_pipeline; print(run_pipeline('data/samples/matrix_story.json', 'matrix_demo', repo_root='.'))"
 ```
 
-3. Outputs:
+### Dashboard
 
-* `out_matrix_network.html` (interactive character network)
-* `out_matrix_emotion.html` (emotion arcs)
-* `out_matrix_tension_pace.html` (tension vs pace)
-* `out_matrix_d3_graph.json` (for D3)
-* `out_matrix_fingerprint.csv` (ML vector)
-
----
-
-## 5) Clustering stories with the fingerprint vectors
-
-If you have multiple `*_fingerprint.csv` files, concatenate them:
-
-```python
-import glob
-import pandas as pd
-from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import KMeans
-
-fps = []
-for p in glob.glob("*_fingerprint.csv"):
-    fps.append(pd.read_csv(p))
-df = pd.concat(fps, ignore_index=True)
-
-story_ids = df["story_id"].values
-X = df.drop(columns=["story_id"]).values
-
-X = StandardScaler().fit_transform(X)
-labels = KMeans(n_clusters=5, random_state=42, n_init="auto").fit_predict(X)
-
-out = pd.DataFrame({"story_id": story_ids, "cluster": labels})
-print(out.sort_values("cluster"))
+```bash
+pip install -r requirements.txt
+python src/storygraph/dashboard/app.py
 ```
