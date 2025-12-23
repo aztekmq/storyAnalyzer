@@ -1,5 +1,3 @@
-Absolutely — below is a full, end-to-end setup you can drop into a repo:
-
 * **Data schema** in **JSON**, **SQL**, and **Pandas**
 * A **Python pipeline** that:
 
@@ -739,11 +737,3 @@ labels = KMeans(n_clusters=5, random_state=42, n_init="auto").fit_predict(X)
 out = pd.DataFrame({"story_id": story_ids, "cluster": labels})
 print(out.sort_values("cluster"))
 ```
-
----
-
-If you want, I can also add:
-
-* **scene/chapter-level ingestion** (so edges intensify per scene and you get *dynamic* network graphs over time)
-* a **“story genome”** embedding that combines the fingerprint + bag-of-themes + relationship-type frequencies
-* a **dashboard** (Plotly Dash) where you upload JSON and it auto-generates all graphs + exports.
